@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: transaction-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/transaction
+    username: postgres
+    password: huydp123
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        "[format_sql]": true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  kafka:
+    producer:
+        bootstrap-servers: localhost:9092
+        key-serializer: org.apache.kafka.common.serialization.StringSerializer
+        value-serializer: org.apache.kafka.common.serialization.StringSerializer
+    properties:
+      spring.json.add.type.headers: true
+  mail:
+    host: mail-dev
+    port: 1025
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+# 4. CẤU HÌNH REDIS (THÊM MỚI VÀO ĐÂY)
+  data:
+      redis:
+          host: localhost       # Địa chỉ Redis Server
+          port: 6379            # Port mặc định của Redis
+          password:             # Để trống nếu không đặt mật khẩu
+          database: 0           # Redis có 16 DB (0-15), chọn cái số 0
+          # Timeout khi kết nối (tùy chọn)
+          connect-timeout: 2s
+          timeout: 1s
+cache:
+    type: redis             # Báo cho Spring Boot biết dùng Redis làm Cache Manager
+    redis:
+      time-to-live: 600000  # (Tùy chọn) Thời gian sống của cache (ms). Ví dụ: 10 phút.
+      cache-null-values: false # Không cache các giá trị null
+server:
+  port: 10090
+
+application:
+    config:
+      account-url: http://localhost:8222/api/v1/accounts
+      auth-url: http://localhost:8222/api/v1/auth
+      kafka:
+        transaction-topic: transaction-topic
+        retry-interval-ms: 1000
+        max-retries: 3
+
+  
+

@@ -23,7 +23,7 @@ spring:
         oauth2:
             resourceserver:
                 jwt:
-                    jwk-set-uri: http://localhost:3000/realms/micro-services
+                    jwk-set-uri: http://localhost:3000/realms/micro-services/protocol/openid-connect/certs
 management:
 
     endpoints:

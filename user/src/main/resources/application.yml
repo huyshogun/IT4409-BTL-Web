@@ -2,7 +2,7 @@ spring:
     application:
         name: account-service
     datasource:
-        url: jdbc:postgresql://localhost:5432/account
+        url: jdbc:postgresql://localhost:5432/user
         username: postgresql
         password: huydp123
         driver-class-name: org.postgresql.Driver
@@ -14,14 +14,6 @@ spring:
             hibernate:
                 "[format_sql]": true
                 dialect: org.hibernate.dialect.PostgreSQLDialect
-
-    kafka:
-        bootstrap-servers: localhost:9092
-        producer:
-            key-serializer: org.apache.kafka.common.serialization.StringSerializer
-            value-serializer: org.apache.kafka.common.serialization.StringSerializer
-            properties:
-                spring.json.add.type.headers: false
 
 # 4. CẤU HÌNH REDIS (THÊM MỚI VÀO ĐÂY)
     data:
@@ -36,5 +28,5 @@ spring:
     cache:
         type: redis             # Báo cho Spring Boot biết dùng Redis làm Cache Manager
         redis:
-        time-to-live: 600000  # (Tùy chọn) Thời gian sống của cache (ms). Ví dụ: 10 phút.
-        cache-null-values: false # Không cache các giá trị null
+            time-to-live: 600000  # (Tùy chọn) Thời gian sống của cache (ms). Ví dụ: 10 phút.
+            cache-null-values: false # Không cache các giá trị null

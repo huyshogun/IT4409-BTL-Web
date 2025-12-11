@@ -46,6 +46,9 @@ public class Account {
     @Column(nullable = false)
     private BigDecimal balance;
 
+    @Column(nullable = false, length = 3)
+    private String currency;
+
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
