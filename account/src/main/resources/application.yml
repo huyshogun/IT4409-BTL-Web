@@ -3,8 +3,8 @@ spring:
         name: account-service
     datasource:
         url: jdbc:postgresql://localhost:5432/account
-        username: postgresql
-        password: huydp123
+        username: postgres
+        password: huypd123
         driver-class-name: org.postgresql.Driver
     jpa:
         hibernate:
@@ -36,5 +36,8 @@ spring:
     cache:
         type: redis             # Báo cho Spring Boot biết dùng Redis làm Cache Manager
         redis:
-        time-to-live: 600000  # (Tùy chọn) Thời gian sống của cache (ms). Ví dụ: 10 phút.
-        cache-null-values: false # Không cache các giá trị null
+            time-to-live: 600000  # (Tùy chọn) Thời gian sống của cache (ms). Ví dụ: 10 phút.
+            cache-null-values: false # Không cache các giá trị null
+# 5. CẤU HÌNH SERVER (THÊM CỔNG VÀO ĐÂY)
+server:
+    port: 10001 # Chọn một cổng khác 8080 để tránh xung đột

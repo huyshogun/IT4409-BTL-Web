@@ -9,6 +9,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -16,7 +17,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class AccountRequestDto {
     @NotNull
-    private Long userId;
+    private UUID userId;
 
     @NotNull
     private Account.AccountType accountType;

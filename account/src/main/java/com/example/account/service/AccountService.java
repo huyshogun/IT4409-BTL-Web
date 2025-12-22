@@ -31,6 +31,8 @@ public class AccountService {
         // Logic kiểm tra User đã có tài khoản chưa (Thông báo lỗi đang hơi sai logic so với code)
         if (accountRepository.existsByUserId(accountRequest.getUserId())) {
             throw new IllegalArgumentException("User already has an account"); // Sửa lại message cho đúng ngữ cảnh
+        } else {
+            System.out.println("Creating account for userId: " + accountRequest.getUserId());
         }
 
         String accountNumber;
@@ -69,11 +71,11 @@ public class AccountService {
      * - Nếu CÓ: Trả về luôn (Không chạy code trong hàm, không query DB).
      * - Nếu KHÔNG: Chạy hàm, lấy từ DB, lưu vào Redis rồi trả về.
      */
-    @Cacheable(value = "accounts", key = "#accountNumber")
-    public AccountResponseDto getAccountByAccountNumber(String accountNumber) {
-        log.info("Fetching account from Database for: {}", accountNumber); // Log để test xem có chọc vào DB không
-        Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found with account number: " + accountNumber));
+    @Cacheable(value = "accounts", key = "#userId")
+    public AccountResponseDto getAccountByUserId(UUID userId) {
+        log.info("Fetching account from Database for: {}", userId); // Log để test xem có chọc vào DB không
+        Account account = accountRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found with user ID: " + userId));
         return mapToResponseDto(account);
     }
 
@@ -84,10 +86,10 @@ public class AccountService {
      * - Giúp dữ liệu trong Cache luôn tươi mới giống DB.
      */
     @Transactional
-    @CachePut(value = "accounts", key = "#accountNumber")
-    public AccountResponseDto updateAccount(String accountNumber, AccountRequestDto accountRequest) {
-        Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found with account number: " + accountNumber));
+    @CachePut(value = "accounts", key = "#userId")
+    public AccountResponseDto updateAccount(UUID userId, AccountRequestDto accountRequest) {
+        Account account = accountRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found with user ID: " + userId));
 
         account.setAccountType(accountRequest.getAccountType());
         account.setUpdatedAt(LocalDateTime.now());
@@ -106,19 +108,19 @@ public class AccountService {
      * - Nếu không xóa, DB mất rồi mà Cache vẫn còn -> Người dùng vẫn xem được tài khoản ma.
      */
     @Transactional
-    @CacheEvict(value = "accounts", key = "#accountNumber")
-    public void deleteAccount(String accountNumber) {
-        Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found with account number: " + accountNumber));
+    @CacheEvict(value = "accounts", key = "#userId")
+    public void deleteAccount(UUID userId) {
+        Account account = accountRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found with user ID: " + userId));
         accountRepository.delete(account);
         log.info("Account deleted with account number: {}", account.getAccountNumber());
     }
 
     @Transactional
-    @CachePut(value = "accounts", key = "#accountNumber")
-    public AccountResponseDto updateAccountBalance(String accountNumber, BigDecimal newBalance) {
-        Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found with account number: " + accountNumber));
+    @CachePut(value = "accounts", key = "#userId")
+    public AccountResponseDto updateAccountBalance(UUID userId, BigDecimal newBalance) {
+        Account account = accountRepository.findByUserId(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found with user ID: " + userId));
 
         account.setBalance(newBalance);
         account.setUpdatedAt(LocalDateTime.now());

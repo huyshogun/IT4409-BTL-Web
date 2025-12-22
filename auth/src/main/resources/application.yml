@@ -1,6 +1,8 @@
 spring:
     application:
         name: auth-service
+        config:
+            account-url: http://localhost:10003/api/v1/accounts
     datasource:
         url: jdbc:postgresql://localhost:5432/auth
         username: postgres
@@ -14,8 +16,21 @@ spring:
         properties:
             hibernate:
                 format_sql: true
+# 3. CẤU HÌNH REDIS (THÊM MỚI VÀO ĐÂY)
+    cache:
+        type: redis # Bắt buộc Spring Boot sử dụng Redis làm Cache Manager
+        redis:
+            time-to-live: 600000 # (Tùy chọn) Thời gian sống mặc định của cache (ms) - 10 phút
+    
+    data:
+        redis:
+            host: localhost # Địa chỉ Redis Server
+            port: 6379      # Port mặc định
+            database: 0     # Redis có 16 DB (0-15), chọn DB số 0
+            # password:     # Bỏ comment nếu Redis của bạn có mật khẩu
+            timeout: 10s    # Thời gian chờ kết nối tối đa
     app:
-        jwtSecret: mySecretKey123912738aopsgjnspkmndfsopkvajoirjg94gf2opfng2moknm
+        jwtSecret: "mySecretKey123912738aopsgjnspkmndfsopkvajoirjg94gf2opfng2moknm"
         jwtExpirationMs: 3000000
         jwtCookieName: springBootEcom
     ecom:
@@ -28,11 +43,12 @@ spring:
                 enabled: true
     
 server:
-    port: 10070
+    port: 10002
 
 logging:
     level:
         '[org.springframework.cache]': TRACE
         '[com.example.auth]': DEBUG
         '[org.hibernate.SQL]': DEBUG 
+
     

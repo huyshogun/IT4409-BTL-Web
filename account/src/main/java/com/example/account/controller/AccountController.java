@@ -18,8 +18,11 @@ import com.example.account.service.AccountService;
 
 import jakarta.validation.Valid;
 
+import java.math.BigDecimal;
+import java.util.UUID;
+
 @RestController
-@RequestMapping("/api/v1/accounts")
+@RequestMapping("/api/v1/account")
 public class AccountController {
     // Define your endpoints here
     @Autowired
@@ -31,33 +34,35 @@ public class AccountController {
         return new ResponseEntity<>(accountService.createAccount(accountRequest), org.springframework.http.HttpStatus.CREATED);
     }
 
-    @GetMapping
+    @GetMapping("/admin/getAll")
     public ResponseEntity<List<AccountResponseDto>> getAllAccounts() {
         // Placeholder implementation
         return ResponseEntity.ok(accountService.getAllAccounts());
     }
 
-    @GetMapping("/{accountNumber}")
-    public ResponseEntity<AccountResponseDto> getAccountByAccountNumber(@PathVariable String accountNumber) {
+    @GetMapping("/{userId}")
+    public ResponseEntity<AccountResponseDto> getAccountByUserId(@PathVariable UUID userId) {
         // Placeholder implementation
-        return ResponseEntity.ok(accountService.getAccountByAccountNumber(accountNumber));
+        return ResponseEntity.ok(accountService.getAccountByUserId(userId));
     }
 
-    @PutMapping("/{accountNumber}")
-    public ResponseEntity<AccountResponseDto> updateAccount(@PathVariable String accountNumber, @Valid @RequestBody AccountRequestDto accountRequest) {
+    @PutMapping("/{userId}")
+    public ResponseEntity<AccountResponseDto> updateAccount(@PathVariable UUID userId, @Valid @RequestBody AccountRequestDto accountRequest) {
         // Placeholder implementation
-        return ResponseEntity.ok(accountService.updateAccount(accountNumber, accountRequest));
+        return ResponseEntity.ok(accountService.updateAccount(userId, accountRequest));
     }
-    @DeleteMapping("/{accountNumber}")
-    public ResponseEntity<Void> deleteAccount(@PathVariable String accountNumber) {
+    /* 
+    @DeleteMapping("/{userId}")
+    public ResponseEntity<Void> deleteAccount(@PathVariable UUID userId   ) {
         // Placeholder implementation
-        accountService.deleteAccount(accountNumber);
+        accountService.deleteAccount(userId);
         return ResponseEntity.noContent().build();
     }
+    */
 
-    @PutMapping("/{accountNumber}/balance")
-    public ResponseEntity<AccountResponseDto> updateAccountBalance(@PathVariable String accountNumber, @RequestBody BigDecimal newBalance) {
+    @PutMapping("/{userId}/balance")
+    public ResponseEntity<AccountResponseDto> updateAccountBalance(@PathVariable UUID userId, @RequestBody BigDecimal newBalance) {
         // Placeholder implementation
-        return ResponseEntity.ok(accountService.updateAccountBalance(accountNumber, newBalance));
+        return ResponseEntity.ok(accountService.updateAccountBalance(userId, newBalance));
     }
 }

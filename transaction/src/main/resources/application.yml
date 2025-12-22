@@ -4,7 +4,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/transaction
     username: postgres
-    password: huydp123
+    password: huypd123
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -46,12 +46,12 @@ cache:
       time-to-live: 600000  # (Tùy chọn) Thời gian sống của cache (ms). Ví dụ: 10 phút.
       cache-null-values: false # Không cache các giá trị null
 server:
-  port: 10090
+  port: 10004
 
 application:
     config:
-      account-url: http://localhost:8222/api/v1/accounts
-      auth-url: http://localhost:8222/api/v1/auth
+      account-url: http://localhost:10003/api/v1/accounts
+      auth-url: http://localhost:10003/api/v1/auth
       kafka:
         transaction-topic: transaction-topic
         retry-interval-ms: 1000
