@@ -23,7 +23,7 @@ import com.example.transaction.repository.TransactionRepository;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
+import java.util.Objects; // Nhớ import cái này
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -43,11 +43,18 @@ public class TransactionService {
         @CacheEvict(value = "transaction-history", allEntries = true), // Cách đơn giản: Xóa toàn bộ cache history (hoặc dùng key cụ thể nếu custom CacheManager)
         @CacheEvict(value = "transactions", allEntries = true) 
     }) 
-    public TransactionResponseDto createTransaction(TransactionRequestDto requestDto) {
+    public TransactionResponseDto createTransaction(UUID userId, TransactionRequestDto requestDto) {
         
         // Logic tìm tài khoản nguồn
         var sourceAccount = accountClient.findAccountByAccountNumber(requestDto.getSourceAccountNumber())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản nguồn"));
+
+        var checkAccountUserId = accountClient.findAccountByUserId(userId.toString())
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản của userId"));
+        
+        if (!Objects.equals(sourceAccount.userId(), checkAccountUserId.userId())) {
+            throw new RuntimeException("Tài khoản nguồn không thuộc về userId này");
+        }
 
         Transaction.TransactionType transactionType = requestDto.getTransactionType();
         TransactionResponseDto responseDto;
@@ -161,6 +168,8 @@ public class TransactionService {
         String transactionReference = generateUniqueReference();
 
         if (sourceAccount.balance().compareTo(requestDto.getAmount()) < 0) {
+            System.out.println("Số dư tài khoản nguồn: " + sourceAccount.balance());
+
             throw new RuntimeException("Số dư tài khoản không đủ");
         }
 
@@ -206,12 +215,15 @@ public class TransactionService {
 
     private TransactionResponseDto mapToResponseDto(Transaction transaction) {
         return TransactionResponseDto.builder()
+                .transactionReference(transaction.getTransactionReference())
                 .sourceAccountNumber(transaction.getSourceAccountNumber())
                 .destinationAccountNumber(transaction.getDestinationAccountNumber())
                 .amount(transaction.getAmount())
                 .transactionType(transaction.getTransactionType())
+                .transactionStatus(transaction.getTransactionStatus())
                 .transactionCurrency(transaction.getCurrency())
                 .description(transaction.getDescription())
+                .createdAt(transaction.getCreatedAt())
                 .build();
     }
 }

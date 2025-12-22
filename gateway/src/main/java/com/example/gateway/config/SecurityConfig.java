@@ -54,7 +54,10 @@ public class SecurityConfig {
                 // Dùng .access() để chạy logic tùy chỉnh (checkUserId)
                 .pathMatchers("/api/v1/account/{userId}").access(checkUserId()) 
 
-                // 4. Các API khác
+                // 4. Chặn truy cập trực tiếp qua accountNumber
+                .pathMatchers("/api/v1/account/internalApi/**").denyAll()
+
+                // 5. Các API khác
                 .anyExchange().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
@@ -90,10 +93,12 @@ public class SecurityConfig {
                 
                 // Cắt chuỗi để lấy phần cuối cùng (userId)
                 String userIdFromUrl = path.substring(path.lastIndexOf('/') + 1);
+                System.out.println("Chuỗi lấy được từ URL là: " + userIdFromUrl);
 
                 // 3. Lấy userId từ Token
                 // auth.getName() trả về "sub" (subject) trong JWT.
                 String userIdFromToken = auth.getName(); 
+                System.out.println("Chuỗi thật là: " + userIdFromToken);
 
                 // 4. So sánh
                 boolean isMatch = userIdFromToken.equals(userIdFromUrl);

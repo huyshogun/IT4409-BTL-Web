@@ -1,5 +1,6 @@
 package com.example.transaction.controller;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,15 +22,15 @@ import lombok.RequiredArgsConstructor;
 
 
 @RestController
-@RequestMapping("/api/v1/transactions")
+@RequestMapping("/api/v1/transaction")
 @RequiredArgsConstructor
 public class TransactionController {
     private final TransactionService transactionService;
 
-    @PostMapping
-    public ResponseEntity<TransactionResponseDto> createTransaction(@Valid@RequestBody TransactionRequestDto requestDto) {
+    @PostMapping("/{userId}")
+    public ResponseEntity<TransactionResponseDto> createTransaction(@PathVariable UUID userId, @Valid @RequestBody TransactionRequestDto requestDto) {
         // Implement the logic to create a transaction
-        return new ResponseEntity<>(transactionService.createTransaction(requestDto), HttpStatus.CREATED);
+        return new ResponseEntity<>(transactionService.createTransaction(userId, requestDto), HttpStatus.CREATED);
     }
 
     @GetMapping("/reference/{reference-id}")
@@ -38,16 +39,16 @@ public class TransactionController {
         return ResponseEntity.ok(responseDto);
     }
 
-    @GetMapping("/reference/source-account/{accout-id}")
+    @GetMapping("/{userId}/reference/source-account/{accountNumber}")
     public ResponseEntity<List<TransactionResponseDto>> getTransactionsBySourceAccountNumber(
-            @PathVariable("accout-id") String accountNumber) {
+            @PathVariable("userId") UUID userId, @PathVariable("accountNumber") String accountNumber) {
         List<TransactionResponseDto> responseDtos = transactionService.getTransactionsBySourceAccountNumber(accountNumber);
         return ResponseEntity.ok(responseDtos);
     }
-    
-    @GetMapping("/reference/destination-account/{accout-id}")
+
+    @GetMapping("/{userId}/reference/destination-account/{accountNumber}")
     public ResponseEntity<List<TransactionResponseDto>> getTransactionsByDestinationAccountNumber(
-            @PathVariable("accout-id") String accountNumber) {
+            @PathVariable("userId") UUID userId, @PathVariable("accountNumber") String accountNumber) {
         List<TransactionResponseDto> responseDtos = transactionService.getTransactionsByDestinationAccountNumber(accountNumber);
         return ResponseEntity.ok(responseDtos);
     }
@@ -58,11 +59,12 @@ public class TransactionController {
         return ResponseEntity.ok(status);
     }
 
-    @GetMapping("reference/account/{account-id}")
+    @GetMapping("/{userId}/reference/{accountNumber}")
     public ResponseEntity<Page<TransactionResponseDto>> getTransactionsByAccountId(
-            @PathVariable("account-id") String accountId,
+            @PathVariable("userId") UUID userId,
+            @PathVariable("accountNumber") String accountNumber,
             Pageable pageable) {
-        Page<TransactionResponseDto> responseDtos = transactionService.getTransactionsBySourceAccountNumberOrDestinationAccountNumber(accountId, pageable);
+        Page<TransactionResponseDto> responseDtos = transactionService.getTransactionsBySourceAccountNumberOrDestinationAccountNumber(accountNumber, pageable);
         return ResponseEntity.ok(responseDtos);
     }
 

@@ -46,6 +46,18 @@ public class AccountController {
         return ResponseEntity.ok(accountService.getAccountByUserId(userId));
     }
 
+    @GetMapping("/internalApi/user/{userId}")
+    public ResponseEntity<AccountResponseDto> getAccountByUserIdInternal(@PathVariable UUID userId) {
+        // Placeholder implementation
+        return ResponseEntity.ok(accountService.getAccountByUserId(userId));
+    }
+
+    @GetMapping("/internalApi/account/{accountNumber}")
+    public ResponseEntity<AccountResponseDto> getAccountByAccountNumber(@PathVariable String accountNumber) {
+        // Placeholder implementation
+        return ResponseEntity.ok(accountService.getAccountByAccountNumber(accountNumber));
+    }
+
     @PutMapping("/{userId}")
     public ResponseEntity<AccountResponseDto> updateAccount(@PathVariable UUID userId, @Valid @RequestBody AccountRequestDto accountRequest) {
         // Placeholder implementation
@@ -60,9 +72,9 @@ public class AccountController {
     }
     */
 
-    @PutMapping("/{userId}/balance")
-    public ResponseEntity<AccountResponseDto> updateAccountBalance(@PathVariable UUID userId, @RequestBody BigDecimal newBalance) {
+    @PutMapping("/internalApi/account/{accountNumber}/balance")
+    public ResponseEntity<AccountResponseDto> updateAccountBalance(@PathVariable String accountNumber, @RequestBody BigDecimal newBalance) {
         // Placeholder implementation
-        return ResponseEntity.ok(accountService.updateAccountBalance(userId, newBalance));
+        return ResponseEntity.ok(accountService.updateAccountBalance(accountNumber, newBalance));
     }
 }

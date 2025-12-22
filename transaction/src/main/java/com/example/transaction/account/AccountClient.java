@@ -6,11 +6,15 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
-@FeignClient(name = "account-service", url = "${application.config.account-url}")
+@FeignClient(name = "ACCOUNT-SERVICE", path = "/api/v1/account")
 public interface AccountClient {
-    @GetMapping("/{accountNumber}")
+    @GetMapping("/internalApi/account/{accountNumber}")
     Optional<AccountResponse> findAccountByAccountNumber(@PathVariable String accountNumber);
 
-    @PutMapping("/{accountNumber}/balance")
+    @GetMapping("/internalApi/user/{userId}")
+    Optional<AccountResponse> findAccountByUserId(@PathVariable String userId);
+
+    @PutMapping("/internalApi/account/{accountNumber}/balance")
     void updateAccountBalance(@PathVariable String accountNumber, BigDecimal newBalance);
+
 }

@@ -25,6 +25,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.security.core.GrantedAuthority;
+import java.util.UUID;
 
 @Component
 public class jwtUtils {
@@ -54,9 +55,11 @@ public class jwtUtils {
             List<String> roles = userPrincipal.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.toList());
+            
+            UUID userId = userPrincipal.getId();
 
             // 2. Truyền roles vào hàm tạo token
-            String jwt = generateTokenFromUsername(userPrincipal.getUsername(), roles);
+            String jwt = generateTokenFromUsername(userId, userPrincipal.getUsername(), roles);
             
             ResponseCookie cookie = ResponseCookie.from(jwtCookie, jwt)
                 .path("/api")
@@ -74,9 +77,10 @@ public class jwtUtils {
         return cookie;
     }
 
-    public String generateTokenFromUsername(String username, List<String> roles) {
+    public String generateTokenFromUsername(UUID userId, String username, List<String> roles) {
             return Jwts.builder()
-                .subject(username)
+                .subject(userId.toString())  // <--- QUAN TRỌNG: Gateway sẽ đọc giá trị này bằng auth.getName()
+                .claim("username", username)
                 .claim("roles", roles) // <--- QUAN TRỌNG: Dòng này nhét quyền vào Token
                 .issuedAt(new Date())
                 .expiration(new Date((new Date()).getTime() + jwtExpirationMs))

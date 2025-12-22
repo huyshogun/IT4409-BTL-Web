@@ -21,5 +21,5 @@ public class TransactionRequestDto {
     private Transaction.TransactionType transactionType;
     private Transaction.TransactionCurrency currency;
     private String description;
-    private LocalDateTime createdAt;
+    //private LocalDateTime createdAt;
 }

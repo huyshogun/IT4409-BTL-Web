@@ -11,6 +11,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
@@ -19,7 +20,8 @@ import java.io.Serializable;
 public class TransactionResponseDto implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
+    private String transactionReference;
     @NotNull
     private String sourceAccountNumber;
 
@@ -35,6 +37,11 @@ public class TransactionResponseDto implements Serializable {
 
     @NotNull
     private Transaction.TransactionCurrency transactionCurrency;
+
+    @NotNull
+    private Transaction.TransactionStatus transactionStatus;
+
+    private LocalDateTime createdAt;
 
     private String description;
 }

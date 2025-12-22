@@ -79,6 +79,14 @@ public class AccountService {
         return mapToResponseDto(account);
     }
 
+    @Cacheable(value = "accounts", key = "#accountNumber")
+    public AccountResponseDto getAccountByAccountNumber(String accountNumber) {
+        log.info("Fetching account from Database for account number: {}", accountNumber); // Log để test xem có chọc vào DB không
+        Account account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found with account number: " + accountNumber));
+        return mapToResponseDto(account);
+    }
+
     /**
      * @CachePut:
      * - Luôn chạy code trong hàm để update xuống DB.
@@ -117,10 +125,10 @@ public class AccountService {
     }
 
     @Transactional
-    @CachePut(value = "accounts", key = "#userId")
-    public AccountResponseDto updateAccountBalance(UUID userId, BigDecimal newBalance) {
-        Account account = accountRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found with user ID: " + userId));
+    @CachePut(value = "accounts", key = "#accountNumber")
+    public AccountResponseDto updateAccountBalance(String accountNumber, BigDecimal newBalance) {
+        Account account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found with account number: " + accountNumber));
 
         account.setBalance(newBalance);
         account.setUpdatedAt(LocalDateTime.now());
