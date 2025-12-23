@@ -32,6 +32,7 @@ public class TransactionService {
     // Sửa tên biến cho chuẩn: respository -> repository
     private final TransactionRepository transactionRepository;
     private final AccountClient accountClient;
+    private final TransactionEventPublisher transactionEventPublisher;
 
     /**
      * TẠO GIAO DỊCH (GHI)
@@ -144,6 +145,8 @@ public class TransactionService {
         transaction.setTransactionType(Transaction.TransactionType.DEPOSIT);
         transaction.setTransactionStatus(Transaction.TransactionStatus.COMPLETED);
 
+        transactionEventPublisher.publishTransactionEvent(transaction, newBalance, BigDecimal.ZERO);
+
         return mapToResponseDto(transactionRepository.save(transaction));
     }
 
@@ -161,6 +164,8 @@ public class TransactionService {
         transaction.setTransactionType(Transaction.TransactionType.WITHDRAWAL);
         transaction.setTransactionStatus(Transaction.TransactionStatus.COMPLETED);
 
+        transactionEventPublisher.publishTransactionEvent(transaction, newBalance, BigDecimal.ZERO);
+
         return mapToResponseDto(transactionRepository.save(transaction));
     }
 
@@ -173,17 +178,21 @@ public class TransactionService {
             throw new RuntimeException("Số dư tài khoản không đủ");
         }
 
+        BigDecimal newSourceBalance = sourceAccount.balance().subtract(requestDto.getAmount());
+        BigDecimal newDestinationBalance = destinationAccount.balance().add(requestDto.getAmount());
+
         // Trừ tiền nguồn
         accountClient.updateAccountBalance(requestDto.getSourceAccountNumber(), 
-                sourceAccount.balance().subtract(requestDto.getAmount()));
+                newSourceBalance);
 
         // Cộng tiền đích
         accountClient.updateAccountBalance(requestDto.getDestinationAccountNumber(), 
-                destinationAccount.balance().add(requestDto.getAmount()));
-
+                newDestinationBalance);
         Transaction transaction = buildTransactionFromDto(requestDto, transactionReference);
         transaction.setTransactionType(Transaction.TransactionType.TRANSFER);
         transaction.setTransactionStatus(Transaction.TransactionStatus.COMPLETED);
+
+        transactionEventPublisher.publishTransactionEvent(transaction, newSourceBalance, newDestinationBalance);
 
         return mapToResponseDto(transactionRepository.save(transaction));
     }

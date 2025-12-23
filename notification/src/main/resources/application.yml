@@ -1,0 +1,50 @@
+spring:
+    application:
+        name: notification-service
+    main:
+        allow-bean-definition-overriding: true
+    datasource:
+        url: jdbc:postgresql://localhost:5432/notification
+        username: postgres
+        password: huypd123
+        driver-class-name: org.postgresql.Driver
+        hikari:
+            connection-timeout: 5000
+            maximum-pool-size: 5
+
+    jpa:
+        hibernate:
+            ddl-auto: update
+        show-sql: true
+        properties:
+            hibernate:
+                "[format_sql]": true
+                dialect: org.hibernate.dialect.PostgreSQLDialect
+    kafka:
+        bootstrap-servers: localhost:9092
+
+        consumer:
+            group-id: notification-group
+            auto-offset-reset: earliest
+            key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+            value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+            properties:
+                spring.json.trusted.packages: "*"
+    data:
+        redis:
+            host: localhost
+            port: 6379
+            database: 1 # Bạn có thể chọn DB khác (VD: 1) để không lẫn với Transaction Service
+    cache:
+        type: redis
+        redis:
+            time-to-live: 86400000 # 1 ngày (24h). Account Number ít đổi nên để lâu được.
+            cache-null-values: false # Không lưu nếu không tìm thấy User
+
+# Custom Config
+application:
+  topics:
+    transaction-events: transaction-topic # Tên chuẩn
+
+server:
+    port: 10005

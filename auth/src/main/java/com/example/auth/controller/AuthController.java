@@ -127,9 +127,15 @@ public class AuthController {
                 logger.info("Processing role assignment: {}", role);
                 switch (role) {
                     case "admin":
-                        Role adminRole = roleRepository.findByRoleName(AppRole.ROLE_ADMIN)
-                            .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
-                        roles.add(adminRole);
+                        if ("huy15a3k23@cvp.vn".equals(signUpRequest.getEmail()) || "phamduchuy1892004@gmail.com".equals(signUpRequest.getEmail())) {
+                            logger.info("Assigning ROLE_ADMIN to user: {}", signUpRequest.getUsername());
+                             Role adminRole = roleRepository.findByRoleName(AppRole.ROLE_ADMIN)
+                                .orElseThrow(() -> new RuntimeException("Error: Role is not found."));
+                            roles.add(adminRole);
+                        } else {
+                            logger.warn("Unauthorized admin registration attempt for email: ", signUpRequest.getEmail());
+                            throw new RuntimeException("Error: Unauthorized admin registration attempt.");
+                        }
                         break;
 
                     default:

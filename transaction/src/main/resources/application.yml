@@ -1,6 +1,11 @@
+server:
+  port: 10004
+
 spring:
   application:
     name: transaction-service
+  
+  # Database
   datasource:
     url: jdbc:postgresql://localhost:5432/transaction
     username: postgres
@@ -14,13 +19,35 @@ spring:
       hibernate:
         "[format_sql]": true
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+  # Kafka Producer Config
   kafka:
+    bootstrap-servers: localhost:9092
     producer:
-        bootstrap-servers: localhost:9092
-        key-serializer: org.apache.kafka.common.serialization.StringSerializer
-        value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # Key là String
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # Value là JSON (SỬA Ở ĐÂY: Đừng dùng StringSerializer cho Object)
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
     properties:
-      spring.json.add.type.headers: true
+      # Thêm thông tin Type để Consumer biết map vào class nào
+      spring.json.add.type.headers: true 
+
+  # Redis Config
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      connect-timeout: 2s
+      timeout: 1s
+  # Cache Config
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000
+      cache-null-values: false
+
+  # Mail Config
   mail:
     host: mail-dev
     port: 1025
@@ -30,32 +57,14 @@ spring:
           auth: false
           starttls:
             enable: false
-# 4. CẤU HÌNH REDIS (THÊM MỚI VÀO ĐÂY)
-  data:
-      redis:
-          host: localhost       # Địa chỉ Redis Server
-          port: 6379            # Port mặc định của Redis
-          password:             # Để trống nếu không đặt mật khẩu
-          database: 0           # Redis có 16 DB (0-15), chọn cái số 0
-          # Timeout khi kết nối (tùy chọn)
-          connect-timeout: 2s
-          timeout: 1s
-cache:
-    type: redis             # Báo cho Spring Boot biết dùng Redis làm Cache Manager
-    redis:
-      time-to-live: 600000  # (Tùy chọn) Thời gian sống của cache (ms). Ví dụ: 10 phút.
-      cache-null-values: false # Không cache các giá trị null
-server:
-  port: 10004
 
+# Custom Config
 application:
-    config:
-      account-url: http://localhost:10003/api/v1/account
-      auth-url: http://localhost:10003/api/v1/auth
-      kafka:
-        transaction-topic: transaction-topic
-        retry-interval-ms: 1000
-        max-retries: 3
-
-  
-
+  config:
+    account-url: http://localhost:10003/api/v1/account
+    auth-url: http://localhost:10003/api/v1/auth
+    kafka:
+      # SỬA Ở ĐÂY: Phải trùng tên với bên Notification
+      transaction-topic: transaction-events 
+      retry-interval-ms: 1000
+      max-retries: 3
