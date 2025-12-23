@@ -1,4 +1,14 @@
 services:
+  cloudflared:
+      image: cloudflare/cloudflared:latest
+      container_name: cloudflared
+      restart: unless-stopped
+      command: tunnel run
+      environment:
+        # Dán cái Token bạn vừa copy vào đây
+        - TUNNEL_TOKEN=eyJhIjoiZWMzNGZmZjRlMjAzMDFjYjZmMjc1ZjFmNzUxOWM3ZGUiLCJ0IjoiYTcwZDM5NzktODM3MS00OWU3LTllNWMtZTg0NWZjNDk3MDc4IiwicyI6Ik1qaGxaamM1T1RZdFkyUTJNUzAwWVdVMkxXSTFOVGd0T0dGbU1qWTFabVZqTW1SbCJ9
+      networks:
+        - microservices-net
   account-service:
       container_name: account-service
       build:
@@ -68,12 +78,15 @@ services:
       ports:
         - "10003:10003" # Map cổng ra ngoài (hoặc 8080 nếu thích)
       environment:
-        # Ghi đè cấu hình để chạy trong Docker
         - SERVER_PORT=10003
-        - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://DISCOVERY-SERVICE:8761/eureka/
-        
-        # Tăng log level nếu cần debug lúc deploy
+        - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-service:8761/eureka/
         - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CLOUD_GATEWAY=INFO
+        
+        # ### THÊM MỚI: SỬA LỖI ZIPKIN CONNECTION REFUSED ###
+        # Thay vì localhost, trỏ thẳng sang container tên là "zipkin"
+        - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+        # (Tùy chọn) Ghi lại 100% request để dễ debug
+        - MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0
       
       networks:
         - microservices-net
