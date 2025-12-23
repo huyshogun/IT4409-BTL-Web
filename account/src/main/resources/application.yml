@@ -41,3 +41,33 @@ spring:
 # 5. CẤU HÌNH SERVER (THÊM CỔNG VÀO ĐÂY)
 server:
     port: 10001 # Chọn một cổng khác 8080 để tránh xung đột
+
+# --- PHẦN THÊM MỚI ---
+
+# 1. Cấu hình Eureka Client
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/ # Đổi nếu Eureka chạy port khác
+    register-with-eureka: true
+    fetch-registry: true
+    healthcheck:
+      enabled: true # QUAN TRỌNG: Cho phép Eureka kiểm tra trạng thái thật của app (DB, Redis...)
+
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10 # Gửi tim (heartbeat) mỗi 10s
+    lease-expiration-duration-in-seconds: 30
+
+# 2. Cấu hình Actuator (Health Check)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus, metrics # Mở các cổng cần thiết
+  endpoint:
+    health:
+      show-details: always # Hiển thị chi tiết (DB up/down, Redis up/down)
+  health:
+    circuitbreakers:
+      enabled: true

@@ -1,6 +1,219 @@
 services:
+  account-service:
+      container_name: account-service
+      build:
+        context: ./account # Trỏ vào thư mục chứa Dockerfile của account-service
+        dockerfile: Dockerfile
+      image: account-service:latest
+      ports:
+        - "10001:10001" # Map cổng ra máy thật
+      environment:
+        # GHI ĐÈ CẤU HÌNH trong application.yml (Thay localhost bằng tên service)
+        
+        # 1. Database
+        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/account
+        - SPRING_DATASOURCE_USERNAME=postgres
+        - SPRING_DATASOURCE_PASSWORD=huypd123
+        
+        # 2. Redis
+        - SPRING_DATA_REDIS_HOST=redis
+        - SPRING_DATA_REDIS_PORT=6379
+        
+        # 3. Kafka
+        - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+        
+        # 4. Eureka (Discovery)
+        - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      
+      networks:
+        - microservices-net
+
+      depends_on:
+        postgresql:
+          condition: service_started
+        redis:
+          condition: service_started
+        kafka:
+          condition: service_started
+        discovery-service:
+          condition: service_healthy
+      restart: on-failure
+  
+  discovery-service:
+      container_name: discovery-service
+      build:
+        context: ./discovery # Trỏ vào thư mục code của discovery
+        dockerfile: Dockerfile
+      image: discovery-service:latest
+      ports:
+        - "8761:8761" # Map ra máy thật để bạn vào xem Dashboard
+      networks:
+        - microservices-net
+      
+      # Kiểm tra sức khỏe: Eureka đã sẵn sàng chưa?
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+        start_period: 10s
+      restart: on-failure
+
+  gateway-service:
+      container_name: gateway-service
+      build:
+        context: ./gateway   # Trỏ đúng thư mục chứa code gateway
+        dockerfile: Dockerfile
+      image: gateway-service:latest
+      ports:
+        - "10003:10003" # Map cổng ra ngoài (hoặc 8080 nếu thích)
+      environment:
+        # Ghi đè cấu hình để chạy trong Docker
+        - SERVER_PORT=10003
+        - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://DISCOVERY-SERVICE:8761/eureka/
+        
+        # Tăng log level nếu cần debug lúc deploy
+        - LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_CLOUD_GATEWAY=INFO
+      
+      networks:
+        - microservices-net
+      
+      # Gateway phải chờ Discovery Service lên hẳn rồi mới chạy
+      depends_on:
+        discovery-service:
+          condition: service_healthy
+      
+      # Healthcheck: Docker sẽ ping vào actuator/health
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:10003/actuator/health"]
+        interval: 10s
+        timeout: 5s
+        retries: 3
+        start_period: 20s # Gateway khởi động hơi lâu nên cho thời gian chờ dài hơn
+      restart: always
+
+  auth-service:
+      container_name: auth-service
+      build:
+        context: ./auth # Trỏ vào thư mục chứa Dockerfile của auth-service
+        dockerfile: Dockerfile
+      image: auth-service:latest
+      ports:
+        - "10002:10002" # Map cổng ra máy thật
+      environment:
+        # GHI ĐÈ CẤU HÌNH trong application.yml (Thay localhost bằng tên service)
+        
+        # 1. Database
+        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/auth
+        - SPRING_DATASOURCE_USERNAME=postgres
+        - SPRING_DATASOURCE_PASSWORD=huypd123
+        
+        # 2. Redis
+        - SPRING_DATA_REDIS_HOST=redis
+        - SPRING_DATA_REDIS_PORT=6379
+        
+        # 3. Kafka
+        - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+        
+        # 4. Eureka (Discovery)
+        - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      
+      networks:
+        - microservices-net
+
+      depends_on:
+        postgresql:
+          condition: service_started
+        redis:
+          condition: service_started
+        kafka:
+          condition: service_started
+        discovery-service:
+          condition: service_healthy
+      restart: on-failure
+
+  transaction-service:
+      container_name: transaction-service
+      build:
+        context: ./transaction # Trỏ vào thư mục chứa Dockerfile của transaction-service
+        dockerfile: Dockerfile
+      image: transaction-service:latest
+      ports:
+        - "10004:10004" # Map cổng ra máy thật
+      environment:
+        # GHI ĐÈ CẤU HÌNH trong application.yml (Thay localhost bằng tên service)
+        
+        # 1. Database
+        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/transaction
+        - SPRING_DATASOURCE_USERNAME=postgres
+        - SPRING_DATASOURCE_PASSWORD=huypd123
+        
+        # 2. Redis
+        - SPRING_DATA_REDIS_HOST=redis
+        - SPRING_DATA_REDIS_PORT=6379
+        
+        # 3. Kafka
+        - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+        
+        # 4. Eureka (Discovery)
+        - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      
+      networks:
+        - microservices-net
+
+      depends_on:
+        postgresql:
+          condition: service_started
+        redis:
+          condition: service_started
+        kafka:
+          condition: service_started
+        discovery-service:
+          condition: service_healthy
+      restart: on-failure
+
+  notification-service:
+      container_name: notification-service
+      build:
+        context: ./notification # Trỏ vào thư mục chứa Dockerfile của notification-service
+        dockerfile: Dockerfile
+      image: notification-service:latest
+      ports:
+        - "10005:10005" # Map cổng ra máy thật
+      environment:
+        # GHI ĐÈ CẤU HÌNH trong application.yml (Thay localhost bằng tên service)
+        
+        # 1. Database
+        - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/notification
+        - SPRING_DATASOURCE_USERNAME=postgres
+        - SPRING_DATASOURCE_PASSWORD=huypd123
+        
+        # 2. Redis
+        - SPRING_DATA_REDIS_HOST=redis
+        - SPRING_DATA_REDIS_PORT=6379
+        
+        # 3. Kafka
+        - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+        
+        # 4. Eureka (Discovery)
+        - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      
+      networks:
+        - microservices-net
+
+      depends_on:
+        postgresql:
+          condition: service_started
+        redis:
+          condition: service_started
+        kafka:
+          condition: service_started
+        discovery-service:
+          condition: service_healthy
+      restart: on-failure
+
   postgresql: 
-    container_name: ms_pg_sql
+    container_name: postgres
     image: postgres  
     environment:
       POSTGRES_USER: postgres
@@ -26,7 +239,7 @@ services:
 
   redis:
       image: redis:alpine
-      container_name: ms_redis
+      container_name: redis
       ports:
         - "6379:6379"
       volumes:
@@ -34,8 +247,9 @@ services:
       networks:
         - microservices-net
       restart: unless-stopped
+  
   zookeeper:
-    image: confluentinc/cp-zookeeper:latest
+    image: confluentinc/cp-zookeeper:7.6.0
     container_name: zookeeper
     environment:
       ZOOKEEPER_SERVER_ID: 1
@@ -47,21 +261,34 @@ services:
       - microservices-net
 
   kafka:
-    image: confluentinc/cp-kafka:latest
-    container_name: ms_kafka
-    ports:
-      - "9092:9092"
-    depends_on:
-      - zookeeper
-    environment:
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-    networks:
-      - microservices-net
+      image: confluentinc/cp-kafka:7.6.0
+      container_name: kafka
+      ports:
+        - "9092:9092" # Cửa cho máy ngoài (Host)
+      depends_on:
+        - zookeeper
+      environment:
+        KAFKA_BROKER_ID: 1
+        KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+        KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+        KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+        KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+        
+        # --- CẤU HÌNH QUAN TRỌNG (SỬA LẠI ĐOẠN NÀY) ---
+        
+        # 1. Định nghĩa tên cho 2 luồng: PLAINTEXT (Nội bộ), PLAINTEXT_HOST (Ra ngoài)
+        KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+        
+        # 2. Quảng bá địa chỉ:
+        # - kafka:29092 -> Cho các service khác trong Docker (Account, Notification...)
+        # - localhost:9092 -> Cho máy tính của bạn (IntelliJ, Kafka Tool...)
+        KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+        
+        # 3. Kafka dùng luồng nào để giao tiếp nội bộ giữa các Broker? -> Dùng luồng nội bộ
+        KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+        
+      networks:
+        - microservices-net
 
 networks:
   microservices-net:

@@ -1,76 +1,98 @@
 server:
   port: 10003
+  # QUAN TRỌNG KHI LÊN CLOUD: 
+  # Giúp Gateway hiểu nó đang đứng sau Proxy (Cloudflare/Nginx)
+  # để xử lý đúng các đường dẫn chuyển hướng (Redirect URI) trong OAuth2.
+  forward-headers-strategy: native 
 
 spring:
   application:
     name: gateway-service
+  
+  # Tăng kích thước bộ đệm cho Header (Tránh lỗi Header quá dài khi dùng JWT Token lớn)
+  codec:
+    max-in-memory-size: 16MB 
+    
   cloud:
     gateway:
       discovery:
         locator:
-          enabled: true
+          enabled: true # Tự động tìm service trên Eureka
+          #lower-case-service-id: true # Chuyển tên service thành chữ thường (AUTH-SERVICE -> auth-service)
       
-      # --- CẤU HÌNH CORS (THÊM MỚI: BẮT BUỘC CHO WEBSOCKET) ---
+      # CẤU HÌNH CORS (Dữ liệu cũ của bạn - Giữ nguyên)
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOriginPatterns: "*" # Cho phép tất cả domain (có thể thay bằng danh sách cụ thể)
+            allowedOriginPatterns: "*" 
             allowedMethods: "*"
             allowedHeaders: "*"
-            allowCredentials: true # Cho phép gửi Cookie/Token
+            allowCredentials: true 
 
       routes:
-        # --- CÁC SERVICE CŨ ---
+        # --- AUTH SERVICE ---
         - id: auth-service
           uri: lb://AUTH-SERVICE
           predicates:
             - Path=/api/v1/auth/**
         
+        # --- ACCOUNT SERVICE ---
         - id: account-service
           uri: lb://ACCOUNT-SERVICE
           predicates:
             - Path=/api/v1/account/**
         
+        # --- TRANSACTION SERVICE ---
         - id: transaction-service
           uri: lb://TRANSACTION-SERVICE
           predicates:
             - Path=/api/v1/transaction/**
 
-        # --- CÁC SERVICE MỚI (NOTIFICATION) ---
-        
-        # 1. Route cho API Lịch sử thông báo, đánh dấu đã đọc
+        # --- NOTIFICATION SERVICE ---
         - id: notification-service
-          uri: lb://NOTIFICATION-SERVICE # Tên service trên Eureka
+          uri: lb://NOTIFICATION-SERVICE
           predicates:
-            - Path=/api/v1/notification/**
+            - Path=/api/v1/notification/** 
         
-        # 2. Route cho WebSocket (Real-time)
+        # WebSocket Route
         - id: notification-service-ws
-          uri: lb:ws://NOTIFICATION-SERVICE # LƯU Ý: Phải là 'lb:ws://'
+          uri: lb:ws://NOTIFICATION-SERVICE
           predicates:
             - Path=/ws/**
 
+  # Cấu hình Security (Giữ nguyên)
   security:
     oauth2:
       resourceserver:
         jwt:
           jws-algorithms: HS256
 
+# --- THÊM MỚI: CẤU HÌNH EUREKA CLIENT ---
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/ # Mặc định local, Docker sẽ ghi đè
+    register-with-eureka: true
+    fetch-registry: true
+    healthcheck:
+      enabled: true # Cho phép Eureka kiểm tra sức khỏe Gateway
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 10
+
 # Custom Config
 app:
   jwtSecret: "mySecretKey123912738aopsgjnspkmndfsopkvajoirjg94gf2opfng2moknm" 
   jwtCookieName: springBootEcom
 
-# Actuator & Logging
+# --- CẬP NHẬT: HEALTH CHECK ---
 management:
   endpoints:
     web:
       exposure:
-        include: health, info, trace, prometheus
-
-logging:
-  level:
-    root: INFO
-    org.springframework.cloud.gateway: DEBUG
-    org.springframework.security: DEBUG
-    org.springframework.security.oauth2: DEBUG
+        include: health, info, prometheus, gateway # Thêm 'gateway' để xem route
+  endpoint:
+    health:
+      show-details: always # Hiển thị chi tiết lỗi nếu có
+    gateway:
+      enabled: true # Cho phép xem danh sách route qua Actuator

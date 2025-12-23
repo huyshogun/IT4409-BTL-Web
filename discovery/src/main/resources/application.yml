@@ -1,15 +1,27 @@
-spring:
-    application:
-        name: discovery-service
-    eureka:
-        instance:
-            hostname: localhost
-            prefer-ip-address: true
-        client:
-            registerWithEuraka: false
-            fetchRegistry: false
-            serviceUrl:
-                defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
-
 server:
-    port: 8761
+  port: 8761
+
+spring:
+  application:
+    name: discovery-service
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    # QUAN TRỌNG: 2 dòng này phải là false vì đây là Server, không phải Client
+    register-with-eureka: false # Đã sửa lỗi chính tả (Euraka -> Eureka)
+    fetch-registry: false
+    service-url:
+      defaultZone: http://${eureka.instance.hostname}:${server.port}/eureka/
+  
+  # Cấu hình thêm để tắt chế độ bảo vệ (Self Preservation) khi chạy môi trường Dev/Local
+  # Giúp loại bỏ các service chết nhanh hơn
+  server:
+    enable-self-preservation: false 
+    wait-time-in-ms-when-sync-empty: 5
+
+logging:
+  level:
+    com.netflix.eureka: OFF # Tắt bớt log ồn ào của Eureka
+    com.netflix.discovery: OFF

@@ -1,4 +1,4 @@
-CREATE DATABASE account;
-CREATE DATABASE transaction;
-CREATE DATABASE auth;
-CREATE DATABASE notification;
+CREATE DATABASE "account";
+CREATE DATABASE "transaction";
+CREATE DATABASE "auth";
+CREATE DATABASE "notification";
