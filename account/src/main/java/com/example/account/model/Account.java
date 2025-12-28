@@ -40,6 +40,9 @@ public class Account {
     @Column(nullable = false)
     private UUID userId;
 
+    @Column(nullable = false)
+    private String accountName;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 10)
     private AccountType accountType;
@@ -49,6 +52,9 @@ public class Account {
 
     @Column(nullable = false, length = 3)
     private String currency;
+
+    @Column(name = "qr_code", columnDefinition = "TEXT") 
+    private String qrCode;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;

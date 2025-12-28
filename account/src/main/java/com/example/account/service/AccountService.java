@@ -15,8 +15,18 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.account.dto.AccountRequestDto;
 import com.example.account.dto.AccountResponseDto;
 import com.example.account.model.Account;
-import com.example.account.respository.AccountRespository; // Lưu ý: Tên package bạn đang gõ sai là respository -> repository
-
+import com.example.account.respository.AccountRespository; 
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
+import com.google.zxing.BarcodeFormat;
+import com.google.zxing.client.j2se.MatrixToImageWriter;
+import com.google.zxing.common.BitMatrix;
+import com.google.zxing.qrcode.QRCodeWriter;
+import com.fasterxml.jackson.databind.ObjectMapper; // Dùng để tạo JSON string
+import java.io.ByteArrayOutputStream;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -28,33 +38,82 @@ public class AccountService {
 
     @Transactional
     public AccountResponseDto createAccount(AccountRequestDto accountRequest) {
-        // Logic kiểm tra User đã có tài khoản chưa (Thông báo lỗi đang hơi sai logic so với code)
+        // 1. Kiểm tra User đã có tài khoản chưa
         if (accountRepository.existsByUserId(accountRequest.getUserId())) {
-            throw new IllegalArgumentException("User already has an account"); // Sửa lại message cho đúng ngữ cảnh
-        } else {
-            System.out.println("Creating account for userId: " + accountRequest.getUserId());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, 
+                "Account already exists for user ID: " + accountRequest.getUserId());
         }
 
+        // 2. Sinh số tài khoản ngẫu nhiên (đảm bảo không trùng)
         String accountNumber;
         do {
             accountNumber = generateAccountNumber();
         } while (accountRepository.existsByAccountNumber(accountNumber));
 
+        // 3. Chuẩn bị dữ liệu Account (Chưa lưu DB vội)
         Account account = Account.builder()
                 .accountNumber(accountNumber)
                 .userId(accountRequest.getUserId())
+                .accountName(accountRequest.getAccountName())
                 .accountType(accountRequest.getAccountType())
                 .balance(accountRequest.getInitialDeposit() != null ? accountRequest.getInitialDeposit() : BigDecimal.ZERO)
-                .currency(accountRequest.getCurrency()) // BỔ SUNG: Bạn quên map field này, sẽ bị lỗi DB vì nullable=false
+                .currency(accountRequest.getCurrency()) // Đã fix lỗi thiếu field này
                 .createdAt(LocalDateTime.now())
                 .updatedAt(LocalDateTime.now())
                 .isActive(true)
                 .build();
 
+        // 4. --- TẠO MÃ QR VÀ GÁN VÀO MODEL ---
+        try {
+            // Tạo nội dung cho mã QR (Dạng JSON để các máy khác dễ đọc)
+            String qrContent = createQrPayload(account);
+            
+            // Sinh ảnh QR dưới dạng chuỗi Base64
+            String qrBase64 = generateQrBase64(qrContent, 300, 300);
+            
+            // Gán vào entity
+            account.setQrCode(qrBase64);
+            
+        } catch (Exception e) {
+            // Nếu lỗi tạo QR thì chỉ log warning, không chặn việc tạo tài khoản
+            log.warn("Failed to generate QR Code for account: {}", accountNumber, e);
+            account.setQrCode(null); 
+        }
+
+        // 5. Lưu xuống DB
         Account savedAccount = accountRepository.save(account);
         log.info("Account created with ID: {}", savedAccount.getId());
 
         return mapToResponseDto(savedAccount);
+    }
+
+    // --- HÀM BỔ TRỢ 1: Tạo nội dung JSON cho QR ---
+    private String createQrPayload(Account account) {
+        try {
+            // Tạo Map chứa thông tin cần thiết để chuyển khoản
+            Map<String, String> qrData = new HashMap<>();
+            qrData.put("type", "TRANSFER");
+            qrData.put("accountName", account.getAccountName());
+            qrData.put("accountNumber", account.getAccountNumber());
+            qrData.put("bankCode", "HUY_BANK_CORE");
+            
+            // Chuyển Map thành chuỗi JSON: {"type":"TRANSFER", ...}
+            return new ObjectMapper().writeValueAsString(qrData);
+        } catch (Exception e) {
+            return account.getAccountNumber(); // Fallback về số tài khoản thường nếu lỗi JSON
+        }
+    }
+
+    // --- HÀM BỔ TRỢ 2: Sinh ảnh QR Base64 ---
+    private String generateQrBase64(String content, int width, int height) throws Exception {
+        QRCodeWriter barcodeWriter = new QRCodeWriter();
+        BitMatrix bitMatrix = barcodeWriter.encode(content, BarcodeFormat.QR_CODE, width, height);
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        MatrixToImageWriter.writeToStream(bitMatrix, "PNG", bos);
+        
+        // Trả về chuỗi chuẩn để Frontend hiển thị được ngay trong thẻ <img>
+        return "data:image/png;base64," + Base64.getEncoder().encodeToString(bos.toByteArray());
     }
 
     // Không nên cache hàm getAll vì dữ liệu quá lớn và thay đổi liên tục
@@ -75,7 +134,8 @@ public class AccountService {
     public AccountResponseDto getAccountByUserId(UUID userId) {
         log.info("Fetching account from Database for: {}", userId); // Log để test xem có chọc vào DB không
         Account account = accountRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found with user ID: " + userId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
+                                    "Account not found with user ID: " + userId));
         return mapToResponseDto(account);
     }
 
@@ -83,7 +143,8 @@ public class AccountService {
     public AccountResponseDto getAccountByAccountNumber(String accountNumber) {
         log.info("Fetching account from Database for account number: {}", accountNumber); // Log để test xem có chọc vào DB không
         Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found with account number: " + accountNumber));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
+                                    "Account not found with account number: " + accountNumber));
         return mapToResponseDto(account);
     }
 
@@ -97,10 +158,12 @@ public class AccountService {
     @CachePut(value = "accounts", key = "#userId")
     public AccountResponseDto updateAccount(UUID userId, AccountRequestDto accountRequest) {
         Account account = accountRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found with user ID: " + userId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
+                                    "Account not found with user ID: " + userId));
 
         account.setAccountType(accountRequest.getAccountType());
         account.setUpdatedAt(LocalDateTime.now());
+        account.setAccountName(accountRequest.getAccountName());
         
         // Lưu ý: Logic update balance nên cẩn thận, thường không update trực tiếp ở đây
         
@@ -119,7 +182,8 @@ public class AccountService {
     @CacheEvict(value = "accounts", key = "#userId")
     public void deleteAccount(UUID userId) {
         Account account = accountRepository.findByUserId(userId)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found with user ID: " + userId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
+                                    "Account not found with user ID: " + userId));
         accountRepository.delete(account);
         log.info("Account deleted with account number: {}", account.getAccountNumber());
     }
@@ -128,7 +192,8 @@ public class AccountService {
     @CachePut(value = "accounts", key = "#accountNumber")
     public AccountResponseDto updateAccountBalance(String accountNumber, BigDecimal newBalance) {
         Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found with account number: " + accountNumber));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
+                                    "Account not found with account number: " + accountNumber));
 
         account.setBalance(newBalance);
         account.setUpdatedAt(LocalDateTime.now());
@@ -149,9 +214,11 @@ public class AccountService {
                 .id(account.getId())
                 .accountNumber(account.getAccountNumber())
                 .userId(account.getUserId())
+                .accountName(account.getAccountName())
                 .accountType(account.getAccountType())
                 .balance(account.getBalance())
                 .currency(account.getCurrency()) // Nhớ map thêm cái này
+                .qrCode(account.getQrCode())
                 .createdAt(account.getCreatedAt())
                 .isActive(account.getIsActive())
                 .build();

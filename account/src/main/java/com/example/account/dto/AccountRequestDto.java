@@ -20,6 +20,9 @@ public class AccountRequestDto {
     private UUID userId;
 
     @NotNull
+    private String accountName;
+
+    @NotNull
     private Account.AccountType accountType;
 
     @NotNull

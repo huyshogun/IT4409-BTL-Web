@@ -68,5 +68,12 @@ public class TransactionController {
         return ResponseEntity.ok(responseDtos);
     }
 
+    @GetMapping("{userId}/destination-account/name/{accountNumber}")
+    public ResponseEntity<String> getDestinationAccountName(
+            @PathVariable("userId") UUID userId,
+            @PathVariable("accountNumber") String accountNumber) {
+        String accountName = transactionService.getDestinationAccountName(accountNumber);
+        return ResponseEntity.ok(accountName);
+    }
 
 }

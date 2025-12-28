@@ -19,9 +19,11 @@ public class AccountResponseDto implements Serializable {
     private Long id;
     private String accountNumber;
     private UUID userId;
+    private String accountName;
     private Account.AccountType accountType;
     private BigDecimal balance;
     private String currency;
+    private String qrCode;
     private LocalDateTime createdAt;
     private Boolean isActive;
     

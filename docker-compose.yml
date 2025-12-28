@@ -34,6 +34,12 @@ services:
         
         # 4. Eureka (Discovery)
         - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-service:8761/eureka/
+
+        # ### THÊM MỚI: SỬA LỖI ZIPKIN CONNECTION REFUSED ###
+        # Thay vì localhost, trỏ thẳng sang container tên là "zipkin"
+        - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+        # (Tùy chọn) Ghi lại 100% request để dễ debug
+        - MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0
       
       networks:
         - microservices-net
@@ -46,6 +52,8 @@ services:
         kafka:
           condition: service_started
         discovery-service:
+          condition: service_healthy
+        zipkin:
           condition: service_healthy
       restart: on-failure
   
@@ -171,6 +179,9 @@ services:
         # 4. Eureka (Discovery)
         - EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://discovery-service:8761/eureka/
       
+        - MANAGEMENT_ZIPKIN_TRACING_ENDPOINT=http://zipkin:9411/api/v2/spans
+        # (Tùy chọn) Ghi lại 100% request để dễ debug
+        - MANAGEMENT_TRACING_SAMPLING_PROBABILITY=1.0
       networks:
         - microservices-net
 

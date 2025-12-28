@@ -20,14 +20,14 @@ spring:
           enabled: true # Tự động tìm service trên Eureka
           #lower-case-service-id: true # Chuyển tên service thành chữ thường (AUTH-SERVICE -> auth-service)
       
-      # CẤU HÌNH CORS (Dữ liệu cũ của bạn - Giữ nguyên)
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowedOriginPatterns: "*" 
-            allowedMethods: "*"
-            allowedHeaders: "*"
-            allowCredentials: true 
+      # CẤU HÌNH CORS 
+      #globalcors:
+      #  cors-configurations:
+      #    '[/**]':
+      #      allowedOriginPatterns: "*" 
+      #      allowedMethods: "*"
+      #      allowedHeaders: "*"
+      #      allowCredentials: true 
 
       routes:
         # --- AUTH SERVICE ---
@@ -60,18 +60,17 @@ spring:
           predicates:
             - Path=/ws/**
 
-  # Cấu hình Security (Giữ nguyên)
   security:
     oauth2:
       resourceserver:
         jwt:
           jws-algorithms: HS256
 
-# --- THÊM MỚI: CẤU HÌNH EUREKA CLIENT ---
+# --- CẤU HÌNH EUREKA CLIENT ---
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/ # Mặc định local, Docker sẽ ghi đè
+      defaultZone: http://localhost:8761/eureka/ 
     register-with-eureka: true
     fetch-registry: true
     healthcheck:

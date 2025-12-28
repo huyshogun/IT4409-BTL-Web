@@ -20,6 +20,8 @@ import com.example.transaction.dto.TransactionRequestDto;
 import com.example.transaction.dto.TransactionResponseDto;
 import com.example.transaction.model.Transaction;
 import com.example.transaction.repository.TransactionRepository;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,13 +50,16 @@ public class TransactionService {
         
         // Logic tìm tài khoản nguồn
         var sourceAccount = accountClient.findAccountByAccountNumber(requestDto.getSourceAccountNumber())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản nguồn"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
+                                    "Không tìm thấy tài khoản nguồn."));
 
         var checkAccountUserId = accountClient.findAccountByUserId(userId.toString())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản của userId"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
+                                    "Không tìm thấy tài khoản của userId này."));
         
         if (!Objects.equals(sourceAccount.userId(), checkAccountUserId.userId())) {
-            throw new RuntimeException("Tài khoản nguồn không thuộc về userId này");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, 
+                                    "Tài khoản nguồn không thuộc về userId này.");
         }
 
         Transaction.TransactionType transactionType = requestDto.getTransactionType();
@@ -69,11 +74,12 @@ public class TransactionService {
                 break;
             case TRANSFER:
                 var destinationAccount = accountClient.findAccountByAccountNumber(requestDto.getDestinationAccountNumber())
-                        .orElseThrow(() -> new RuntimeException("Không tìm thấy tài khoản đích"));
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
+                                            "Không tìm thấy tài khoản đích."));
                 responseDto = handleTransfer(requestDto, sourceAccount, destinationAccount);
                 break;
             default:
-                throw new IllegalArgumentException("Invalid transaction type");
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Loại giao dịch không hợp lệ");
         }
 
         return responseDto;
@@ -88,7 +94,8 @@ public class TransactionService {
     public TransactionResponseDto getTransactionByReferenceId(String referenceId) {
         log.info("Fetching transaction from DB: {}", referenceId); // Log để kiểm tra có hit cache không
         Transaction transaction = transactionRepository.findByTransactionReference(referenceId)
-                .orElseThrow(() -> new RuntimeException("Transaction not found with reference ID: " + referenceId));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
+                                    "Giao dịch không tìm thấy với reference ID: " + referenceId));
         return mapToResponseDto(transaction);
     }
 
@@ -108,13 +115,21 @@ public class TransactionService {
    @Transactional(readOnly = true)
     public String getTransactionStatus(String referenceId) {
         Transaction transaction = transactionRepository.findByTransactionReference(referenceId)
-       .orElseThrow(() -> new RuntimeException("Transaction not found with reference ID: " + referenceId));
+       .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
+                            "Giao dịch không tìm thấy với reference ID: " + referenceId));
         return transaction.getTransactionStatus().name();
 
     }
 
+    @Transactional(readOnly = true)
+    public String getDestinationAccountName(String accountNumber) {
 
+        AccountResponse account = accountClient.findAccountByAccountNumber(accountNumber)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, 
+                                "Không tìm thấy tài khoản với số: " + accountNumber));
 
+        return account.accountName();
+    }
 
     /**
      * LẤY LỊCH SỬ GIAO DỊCH CÓ PHÂN TRANG (QUAN TRỌNG)
@@ -154,7 +169,7 @@ public class TransactionService {
         String transactionReference = generateUniqueReference();
 
         if (sourceAccount.balance().compareTo(requestDto.getAmount()) < 0) {
-            throw new RuntimeException("Số dư tài khoản không đủ");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Số dư không đủ để rút tiền");
         }
 
         BigDecimal newBalance = sourceAccount.balance().subtract(requestDto.getAmount());
@@ -175,7 +190,7 @@ public class TransactionService {
         if (sourceAccount.balance().compareTo(requestDto.getAmount()) < 0) {
             System.out.println("Số dư tài khoản nguồn: " + sourceAccount.balance());
 
-            throw new RuntimeException("Số dư tài khoản không đủ");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Số dư không đủ để chuyển tiền");
         }
 
         BigDecimal newSourceBalance = sourceAccount.balance().subtract(requestDto.getAmount());
