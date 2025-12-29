@@ -6,7 +6,7 @@ services:
       command: tunnel run
       environment:
         # Dán cái Token bạn vừa copy vào đây
-        - TUNNEL_TOKEN=eyJhIjoiZWMzNGZmZjRlMjAzMDFjYjZmMjc1ZjFmNzUxOWM3ZGUiLCJ0IjoiYTcwZDM5NzktODM3MS00OWU3LTllNWMtZTg0NWZjNDk3MDc4IiwicyI6Ik1qaGxaamM1T1RZdFkyUTJNUzAwWVdVMkxXSTFOVGd0T0dGbU1qWTFabVZqTW1SbCJ9
+        - TUNNEL_TOKEN=${TUNNEL_TOKEN}
       networks:
         - microservices-net
   account-service:
@@ -22,8 +22,8 @@ services:
         
         # 1. Database
         - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/account
-        - SPRING_DATASOURCE_USERNAME=postgres
-        - SPRING_DATASOURCE_PASSWORD=huypd123
+        - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+        - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
         
         # 2. Redis
         - SPRING_DATA_REDIS_HOST=redis
@@ -126,8 +126,8 @@ services:
         
         # 1. Database
         - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/auth
-        - SPRING_DATASOURCE_USERNAME=postgres
-        - SPRING_DATASOURCE_PASSWORD=huypd123
+        - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+        - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
         
         # 2. Redis
         - SPRING_DATA_REDIS_HOST=redis
@@ -166,8 +166,8 @@ services:
         
         # 1. Database
         - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/transaction
-        - SPRING_DATASOURCE_USERNAME=postgres
-        - SPRING_DATASOURCE_PASSWORD=huypd123
+        - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+        - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
         
         # 2. Redis
         - SPRING_DATA_REDIS_HOST=redis
@@ -209,8 +209,8 @@ services:
         
         # 1. Database
         - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/notification
-        - SPRING_DATASOURCE_USERNAME=postgres
-        - SPRING_DATASOURCE_PASSWORD=huypd123
+        - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+        - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
         
         # 2. Redis
         - SPRING_DATA_REDIS_HOST=redis
@@ -240,8 +240,8 @@ services:
     container_name: postgres
     image: postgres  
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: huypd123
+      POSTGRES_USER: ${SPRING_DATASOURCE_USERNAME}
+      POSTGRES_PASSWORD: ${SPRING_DATASOURCE_PASSWORD}
       PGDATA: /data/postgres
     volumes:
       - postgres:/data/postgres

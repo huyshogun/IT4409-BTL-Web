@@ -5,8 +5,8 @@ spring:
         allow-bean-definition-overriding: true
     datasource:
         url: jdbc:postgresql://localhost:5432/notification
-        username: postgres
-        password: huypd123
+        username: ${SPRING_DATASOURCE_USERNAME}
+        password: ${SPRING_DATASOURCE_PASSWORD}
         driver-class-name: org.postgresql.Driver
         hikari:
             connection-timeout: 5000
